@@ -1,0 +1,163 @@
+---
+title: "Dashboard"
+author: Disha Patel | 10A
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+# Importing Libraries
+library(flexdashboard)
+library(tidyverse)
+library(highcharter)
+library(gt)
+library(htmltools)
+library(viridis)
+library(DT)
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(caret)
+library(GGally)
+
+```
+
+```{r}
+# Importing data
+obesity = read.csv('obesity_data.csv')
+
+```
+
+Obesity Prediction
+============================================================
+
+Column {.tabset .tabset-fade data-width=650}
+-----------------------------------------------------------------------
+
+### Obesity Category
+
+```{r}
+# Count the frequency of each obesity category
+obesity_counts <- obesity %>% 
+  count(ObesityCategory)
+obesity_counts
+```
+
+
+```{r}
+pie_chart <- plot_ly(obesity_counts, labels = ~ObesityCategory, values = ~n, type = "pie") %>%
+  layout(title = "Obesity Categories", showlegend = TRUE)
+pie_chart
+```
+
+### Age and Obesity
+
+```{r}
+age_plot <- ggplot(obesity, aes(x = ObesityCategory, y = Age, fill = ObesityCategory)) +
+  geom_violin() +  # Use geom_violin() for violin plot or geom_boxplot() for box plot
+  labs(title = "Distribution of Age by Obesity Category", 
+       x = "Obesity Category", y = "Age") +
+  theme_minimal()
+print(age_plot)
+```
+
+### BMI vs Weight
+
+```{r}
+scatter_plot <- plot_ly(obesity, x = ~Weight, y = ~BMI, type = "scatter", mode = "markers",
+                        marker = list(color = "#1f77b4", size = 10, opacity = 0.7)) %>%
+                layout(title = "BMI vs. Weight",
+                       xaxis = list(title = "Weight"),
+                       yaxis = list(title = "BMI"))
+scatter_plot
+```
+
+### Correlation matrix
+
+```{r}
+correlation_matrix <- cor(obesity[, c("Age", "Weight", "Height", "BMI", "PhysicalActivityLevel")])
+
+# Create the correlation heatmap
+heatmap(correlation_matrix, 
+        col = colorRampPalette(c("blue", "white", "red"))(100),  # Customize the color palette
+        symm = TRUE,  # Ensure symmetry in the heatmap
+        margins = c(10, 10))  # Add margins to the heatmap for better visualization
+
+```
+
+
+### Model Calculation
+
+```{r}
+data <- obesity %>% select(Weight, Height, BMI)
+# Split the data into training and testing sets (80% training, 20% testing)
+set.seed(123) # for reproducibility
+train_index <- createDataPartition(data$BMI, p = 0.8, list = FALSE)
+train_data <- data[train_index, ]
+test_data <- data[-train_index, ]
+
+# Train a linear regression model
+lm_model <- lm(BMI ~ Weight + Height, data = train_data)
+
+# Evaluate the model
+summary(lm_model)
+
+# Make predictions on the testing data
+predicted_bmi <- predict(lm_model, newdata = test_data)
+
+# Evaluate the model's performance
+performance <- data.frame(
+  Observed_BMI = test_data$BMI,
+  Predicted_BMI = predicted_bmi
+)
+
+# Calculate RMSE (Root Mean Squared Error)
+rmse <- sqrt(mean((performance$Observed_BMI - performance$Predicted_BMI)^2))
+```
+
+### Model Visualization
+
+```{r}
+plot(performance$Observed_BMI, performance$Predicted_BMI, 
+     main = "Observed vs. Predicted BMI",
+     xlab = "Observed BMI",
+     ylab = "Predicted BMI",
+     pch = 19,
+     col = "blue")
+
+# Add a line representing the identity line
+abline(0, 1, col = "red")
+
+# Add a legend
+legend("bottomright", legend = c("Observed vs. Predicted", "Identity Line"), 
+       col = c("blue", "red"), pch = c(19, NA), lty = c(NA, 1))
+```
+
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Obesity Category by Gender
+
+```{r}
+# Create the grouped bar chart
+grouped_bar_chart <- ggplot(obesity, aes(x = ObesityCategory, fill = Gender)) +
+                      geom_bar(position = "dodge") +
+                      labs(title = "Obesity Category by Gender", x = "Obesity Category", y = "Count") +
+                      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Display the grouped bar chart
+print(grouped_bar_chart)
+```
+
+
+### Dataset
+
+```{r}
+datatable(obesity, options = list(pageLength = 100))
+```
+
+
+
