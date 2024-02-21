@@ -9,5 +9,8 @@ The adjusted R-squared value is 0.9822, which adjusts for the number of predicto
 
 **Manegerial Implication:** Overall, the model suggests that weight and height are strong predictors of BMI, with each contributing significantly to the model's predictive power. The high R-squared value indicates that the model fits the data well. However, it's important to note that while weight and height are important predictors, there may be other factors not included in the model that also influence BMI.
 
+![image](https://github.com/Dishapatel401/Obesity_prediction_dashboard/assets/157447501/d3d1fb49-60ad-4217-85da-f3b1f031fee0)
+
+
 **Dataset used:** https://www.kaggle.com/datasets/mrsimple07/obesity-prediction
 
